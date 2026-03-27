@@ -522,7 +522,7 @@ MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Support
 
-- **Issues**: Report bugs and request features via [GitHub Issues](https://github.com/yourusername/llmenv/issues)
+- **Issues**: Report bugs and request features via [GitHub Issues](https://github.com/RohanKaranjee/llmenv/issues)
 - **Discussions**: Join our community discussions for questions and ideas
 
 ## Roadmap
