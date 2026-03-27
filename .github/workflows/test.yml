@@ -34,14 +34,10 @@ jobs:
       - name: Run tests
         run: npm test
       
-      - name: Generate coverage
-        run: npm run test:coverage
-      
       - name: Upload coverage to Codecov
+        if: matrix.os == 'ubuntu-latest' && matrix.node-version == 20
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage/coverage-final.json
-          flags: ${{ matrix.os }}-node${{ matrix.node-version }}
-          name: ${{ matrix.os }}-node${{ matrix.node-version }}
           fail_ci_if_error: false
