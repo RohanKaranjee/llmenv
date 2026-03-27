@@ -1,0 +1,12 @@
+{
+  "project": "llmenv",
+  "stack": [
+    "TypeScript",
+    "Node.js"
+  ],
+  "avoid": [],
+  "context": "CLI tool for AI context management",
+  "priorities": [
+    "Developer experience"
+  ]
+}
