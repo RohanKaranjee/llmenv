@@ -1,5 +1,6 @@
 import { listProjects } from '../core/projects.js';
 import { formatProjectList } from '../utils/formatters.js';
+import { renderBanner } from '../ui/components/banner.js';
 
 /**
  * Display all registered projects in a formatted table.
@@ -25,6 +26,9 @@ export async function projectsCommand(): Promise<void> {
   // Get all projects sorted by last active
   const projects = await listProjects();
   
+  // Display banner
+  console.log(renderBanner());
+
   // Format and display the project list
   const formatted = formatProjectList(projects);
   console.log(formatted);

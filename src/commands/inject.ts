@@ -1,10 +1,12 @@
-import chalk from 'chalk';
 import ora from 'ora';
 import { buildContext, formatContext } from '../core/context.js';
 import { callAI } from '../core/ai-client.js';
 import { getSettingsPath, readJSON, fileExists } from '../core/config.js';
 import { ConfigError } from '../types/errors.js';
 import type { AISettings } from '../types/index.js';
+import { renderBox, renderHeader } from '../ui/index.js';
+import { getColor, applyColor } from '../ui/core/theme.js';
+import { getIcon } from '../ui/icons.js';
 
 /**
  * Inject command: wrap user prompt with context and either display (dry run) or send to AI API.
@@ -48,46 +50,67 @@ export async function injectCommand(
   // Append user prompt after [END CONTEXT]
   const wrappedPrompt = `${formattedContext}\n\n${prompt}`;
   
-  // Dry run: output to stdout without API call
-  if (options.dry) {
-    console.log(wrappedPrompt);
-    return;
-  }
-  
   // Live API call: read settings and call AI
   const settingsPath = getSettingsPath();
-  
-  // Check if settings file exists
-  if (!(await fileExists(settingsPath))) {
-    throw new ConfigError(
-      "Run 'llmenv config' first to set up AI provider",
-      settingsPath
-    );
+  let isDryRun = options.dry;
+  let settings: AISettings | undefined;
+
+  // Check if settings file exists, if not fallback to dry run
+  if (!isDryRun) {
+    if (!(await fileExists(settingsPath))) {
+      isDryRun = true;
+      console.log(applyColor('⚠ No AI provider configured. Falling back to dry run.', getColor('warning')));
+      console.log(applyColor('Run "llmenv config" to set up an API key.\n', getColor('textMuted')));
+    } else {
+      settings = await readJSON<AISettings>(settingsPath);
+    }
   }
   
-  // Read AI settings
-  const settings = await readJSON<AISettings>(settingsPath);
+  // Dry run: output to stdout without API call
+  if (isDryRun) {
+    const box = renderBox(wrappedPrompt, {
+      title: `${getIcon('file')} Context-Wrapped Prompt (Copy below)`,
+      borderStyle: 'rounded',
+      borderColor: getColor('info'),
+      padding: 1
+    });
+    console.log('\n' + box + '\n');
+    return;
+  }
   
   // Display loading spinner
   const spinner = ora('Calling AI...').start();
   
   try {
     // Call AI API with wrapped prompt
-    const response = await callAI(wrappedPrompt, settings);
+    // settings is guaranteed to be defined here due to the check above
+    const response = await callAI(wrappedPrompt, settings!);
     
     // Stop spinner
     spinner.succeed('Response received');
     
     // Display AI response
-    console.log(chalk.cyan('\n📝 AI Response\n'));
-    console.log(response.content);
-    console.log();
+    console.log('\n' + renderHeader({ 
+      text: 'AI Response', 
+      icon: getIcon('ai') as string, 
+      level: 1, 
+      color: getColor('primary') 
+    }) + '\n');
+    
+    const responseBox = renderBox(response.content, {
+      borderStyle: 'rounded',
+      borderColor: getColor('primary'),
+      padding: 1
+    });
+    console.log(responseBox + '\n');
     
     // Display usage information if available
     if (response.usage) {
-      console.log(chalk.gray(`Model: ${response.model}`));
-      console.log(chalk.gray(`Tokens: ${response.usage.totalTokens} (${response.usage.promptTokens} prompt + ${response.usage.completionTokens} completion)`));
-      console.log();
+      const usageInfo = [
+        applyColor(`Model: ${response.model}`, getColor('textMuted')),
+        applyColor(`Tokens: ${response.usage.totalTokens} (${response.usage.promptTokens} prompt + ${response.usage.completionTokens} completion)`, getColor('textMuted'))
+      ].join('\n');
+      console.log(usageInfo + '\n');
     }
   } catch (error) {
     // Stop spinner with failure

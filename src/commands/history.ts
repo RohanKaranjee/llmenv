@@ -3,6 +3,7 @@ import { findProjectRoot } from '../core/context.js';
 import { getHistory } from '../core/history.js';
 import { formatHistory } from '../utils/formatters.js';
 import { ProjectNotFoundError } from '../types/errors.js';
+import { renderBanner } from '../ui/components/banner.js';
 
 /**
  * Display the decision history for the current project.
@@ -38,8 +39,9 @@ export async function historyCommand(cwd: string = process.cwd()): Promise<void>
   const history = await getHistory(projectName);
   
   // Requirement 9.4, 9.5, 9.6: Format and display history
-  // formatHistory handles empty history, formatting, and sorting
+  // Format and display history
+  console.log(renderBanner());
   const formattedHistory = formatHistory(history);
   console.log(formattedHistory);
-  console.log(); // Empty line for spacing
+  console.log();
 }

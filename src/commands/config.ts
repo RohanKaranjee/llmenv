@@ -1,8 +1,10 @@
 import inquirer from 'inquirer';
-import chalk from 'chalk';
 import { getSettingsPath, writeJSON, initializeConfig } from '../core/config.js';
 import { ValidationError } from '../types/errors.js';
 import type { AISettings } from '../types/index.js';
+import { renderBox, renderHeader } from '../ui/index.js';
+import { getColor, applyColor } from '../ui/core/theme.js';
+import { getIcon } from '../ui/icons.js';
 
 /**
  * Configure AI provider and API key settings.
@@ -29,6 +31,7 @@ export async function configCommand(): Promise<void> {
   await initializeConfig();
 
   // Prompt for AI provider and API key
+  console.log(renderHeader({ text: 'AI Configuration', icon: getIcon('settings') as string, level: 1 }) + '\n');
   const answers = await inquirer.prompt<{
     provider: 'openai' | 'claude';
     apiKey: string;
@@ -74,7 +77,17 @@ export async function configCommand(): Promise<void> {
   await writeJSON(settingsPath, settings);
 
   // Display confirmation message
-  console.log(chalk.green('\n✓ AI settings configured successfully'));
-  console.log(chalk.gray(`Provider: ${settings.provider}`));
-  console.log(chalk.gray(`Settings saved to: ${settingsPath}`));
+  const details = [
+    applyColor(`Provider: ${settings.provider}`, getColor('textBright')),
+    applyColor(`Settings saved to: ${settingsPath}`, getColor('textMuted'))
+  ].join('\n');
+
+  const successBox = renderBox(details, {
+    title: `${getIcon('success')} Configuration Saved`,
+    borderStyle: 'rounded',
+    borderColor: getColor('success'),
+    padding: 1
+  });
+  
+  console.log('\n' + successBox + '\n');
 }

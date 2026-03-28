@@ -1,7 +1,9 @@
 import inquirer from 'inquirer';
-import chalk from 'chalk';
 import { listProjects } from '../core/projects.js';
 import { findProjectRoot } from '../core/context.js';
+import { renderBox, renderHeader, renderEmptyState } from '../ui/index.js';
+import { getColor, applyColor } from '../ui/core/theme.js';
+import { getIcon } from '../ui/icons.js';
 
 /**
  * Interactive project switcher.
@@ -30,10 +32,15 @@ export async function switchCommand(): Promise<void> {
   
   // Check if there are any projects
   if (projects.length === 0) {
-    console.log(chalk.yellow('No projects registered yet'));
-    console.log(chalk.gray('\nRun "llmenv init" in a project directory to register it.'));
+    console.log(renderEmptyState({
+      icon: getIcon('project') as string,
+      message: 'No projects registered yet',
+      suggestion: 'Run "llmenv init" in a project directory to register it.'
+    }));
     return;
   }
+  
+  console.log(renderHeader({ text: 'Switch Project', icon: getIcon('project') as string, level: 1 }) + '\n');
   
   // Detect current project to highlight it
   const currentProjectPath = await findProjectRoot(process.cwd());
@@ -42,7 +49,7 @@ export async function switchCommand(): Promise<void> {
   const choices = projects.map(project => {
     const isCurrent = currentProjectPath === project.path;
     const label = isCurrent 
-      ? `${project.name} (${project.path}) ${chalk.green('← current')}`
+      ? `${project.name} (${project.path}) ${applyColor('← current', getColor('success'))}`
       : `${project.name} (${project.path})`;
     
     return {
@@ -69,21 +76,28 @@ export async function switchCommand(): Promise<void> {
   const selectedProject = projects.find(p => p.path === selectedPath);
   
   if (!selectedProject) {
-    console.log(chalk.red('❌ Error: Selected project not found'));
+    const errorBox = renderBox(applyColor('Selected project not found', getColor('error')), {
+      title: `${getIcon('error')} Error`,
+      borderStyle: 'rounded',
+      borderColor: getColor('error'),
+      padding: 1
+    });
+    console.log('\n' + errorBox);
     return;
   }
   
-  // Change working directory
-  try {
-    process.chdir(selectedPath);
-    
-    // Display confirmation
-    console.log(chalk.green(`\n✓ Switched to project: ${selectedProject.name}`));
-    console.log(chalk.gray(`Path: ${selectedPath}`));
-  } catch (error) {
-    console.log(chalk.red(`❌ Error: Failed to change directory to ${selectedPath}`));
-    if (error instanceof Error) {
-      console.log(chalk.gray(error.message));
-    }
-  }
+  const instruction = [
+    applyColor('To switch to this project directory, run:', getColor('textBright')),
+    '',
+    applyColor(`cd "${selectedPath}"`, getColor('info'))
+  ].join('\n');
+  
+  const successBox = renderBox(instruction, {
+    title: `${getIcon('success')} Selected: ${selectedProject.name}`,
+    borderStyle: 'rounded',
+    borderColor: getColor('success'),
+    padding: 1
+  });
+  
+  console.log('\n' + successBox + '\n');
 }

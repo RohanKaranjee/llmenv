@@ -76,7 +76,7 @@ describe('History Command', () => {
 
     // Verify output contains expected content
     const output = logs.join('\n');
-    expect(output).toContain('📜 Decision History');
+    expect(output).toContain('Decision History');
     expect(output).toContain('2024-03-15'); // Check date part only (timezone-independent)
     expect(output).toContain('[claude]');
     expect(output).toContain('How do I implement authentication?');
@@ -211,7 +211,7 @@ describe('History Command', () => {
 
     // Verify it found the parent project's history
     const output = logs.join('\n');
-    expect(output).toContain('📜 Decision History');
+    expect(output).toContain('Decision History');
     expect(output).toContain('Test prompt');
   });
 

@@ -1,153 +1,133 @@
 import chalk from 'chalk';
-import type { ProjectEntry, Pin, HistoryEntry } from '../types/index.js';
+import type { ProjectEntry, Pin, HistoryEntry, MergedContext } from '../types/index.js';
+import { renderTable } from '../ui/components/table.js';
+import { renderList } from '../ui/components/list.js';
+import { renderTimeline } from '../ui/components/timeline.js';
+import { renderBox } from '../ui/components/box.js';
+import { renderBadge } from '../ui/components/badge.js';
+import { renderEmptyState } from '../ui/components/empty-state.js';
+import { renderHeader } from '../ui/components/header.js';
+import { getIcon } from '../ui/icons.js';
+import { applyColor, getColor } from '../ui/core/theme.js';
 
 /**
  * Format a list of projects as a readable table.
  * Displays project name, path, and last active timestamp.
- * Uses chalk for colored output.
+ * Uses new UI components for enhanced display.
  * 
  * @param projects - Array of project entries to format
  * @returns Formatted string with table layout
  */
 export function formatProjectList(projects: ProjectEntry[]): string {
   if (projects.length === 0) {
-    return chalk.yellow('No projects registered yet');
+    return renderEmptyState({
+      icon: getIcon('project') as string,
+      message: 'No projects registered yet',
+      suggestion: 'Run "llmenv init" in a project directory to get started',
+    });
   }
 
-  const lines: string[] = [];
-  
-  // Header
-  lines.push(chalk.cyan('\n📁 Registered Projects\n'));
-  
-  // Table header
-  const nameHeader = 'Name';
-  const pathHeader = 'Path';
-  const activeHeader = 'Last Active';
-  
-  // Calculate column widths
-  const nameWidth = Math.max(
-    nameHeader.length,
-    ...projects.map(p => p.name.length)
-  );
-  const pathWidth = Math.max(
-    pathHeader.length,
-    ...projects.map(p => p.path.length)
-  );
-  
-  // Format header row
-  lines.push(
-    chalk.bold(
-      nameHeader.padEnd(nameWidth + 2) +
-      pathHeader.padEnd(pathWidth + 2) +
-      activeHeader
-    )
-  );
-  
-  // Separator line
-  lines.push(
-    chalk.gray(
-      '─'.repeat(nameWidth + 2) +
-      '─'.repeat(pathWidth + 2) +
-      '─'.repeat(activeHeader.length)
-    )
-  );
-  
-  // Format each project row
-  for (const project of projects) {
-    const formattedTime = formatRelativeTime(project.lastActive);
-    
-    lines.push(
-      chalk.white(project.name.padEnd(nameWidth + 2)) +
-      chalk.gray(project.path.padEnd(pathWidth + 2)) +
-      chalk.green(formattedTime)
-    );
-  }
-  
-  return lines.join('\n');
+  const header = renderHeader({
+    text: 'Registered Projects',
+    icon: getIcon('project') as string,
+    level: 1,
+  });
+
+  const tableData = projects.map((project) => ({
+    name: project.name,
+    path: project.path,
+    lastActive: formatRelativeTime(project.lastActive),
+  }));
+
+  const table = renderTable({
+    columns: [
+      { header: 'Name', key: 'name', flex: 1, align: 'left' },
+      { header: 'Path', key: 'path', flex: 2, align: 'left' },
+      { header: 'Last Active', key: 'lastActive', flex: 1, align: 'right' },
+    ],
+    data: tableData,
+    borderStyle: 'single',
+  });
+
+  return `${header}\n\n${table}`;
 }
 
 /**
  * Format a list of pins for display.
  * Shows pin ID (first 8 chars), fact text, and creation timestamp.
- * Uses chalk for colored output.
+ * Uses new UI components for enhanced display.
  * 
  * @param pins - Array of pins to format
  * @returns Formatted string with numbered list
  */
 export function formatPinList(pins: Pin[]): string {
   if (pins.length === 0) {
-    return chalk.yellow('No pins created yet');
+    return renderEmptyState({
+      icon: getIcon('pin') as string,
+      message: 'No pins created yet',
+      suggestion: 'Run "llmenv pin <fact>" to add a persistent fact',
+    });
   }
 
-  const lines: string[] = [];
-  
-  // Header
-  lines.push(chalk.cyan('\n📌 Pinned Facts\n'));
-  
-  // Format each pin
-  pins.forEach((pin, index) => {
-    const number = chalk.bold(`${index + 1}.`);
-    const shortId = chalk.gray(`[${pin.id.substring(0, 8)}]`);
-    const fact = chalk.white(pin.fact);
-    const timestamp = chalk.gray(`   Created: ${formatDateTime(pin.createdAt)}`);
-    
-    lines.push(`${number} ${shortId} ${fact}`);
-    lines.push(timestamp);
-    
-    // Add spacing between pins (except after last one)
-    if (index < pins.length - 1) {
-      lines.push('');
-    }
+  const header = renderHeader({
+    text: 'Pinned Facts',
+    icon: getIcon('pin') as string,
+    level: 1,
   });
-  
-  return lines.join('\n');
+
+  const listItems = pins.map((pin) => ({
+    icon: getIcon('pin') as string,
+    text: `[${pin.id.substring(0, 8)}] ${pin.fact}`,
+    subtext: `Created: ${formatDateTime(pin.createdAt)}`,
+    color: getColor('text'),
+  }));
+
+  const list = renderList({
+    items: listItems,
+    numbered: true,
+    spacing: 1,
+  });
+
+  return `${header}\n\n${list}`;
 }
 
 /**
  * Format decision history for display.
  * Shows timestamp, prompt, response summary, and provider.
- * Uses chalk for colored output.
+ * Uses new UI components for enhanced display.
  * 
  * @param history - Array of history entries to format
  * @returns Formatted string with history entries
  */
 export function formatHistory(history: HistoryEntry[]): string {
   if (history.length === 0) {
-    return chalk.yellow('No decision history for this project');
+    return renderEmptyState({
+      icon: getIcon('history') as string,
+      message: 'No decision history for this project',
+      suggestion: 'Run "llmenv inject <prompt>" to make AI-assisted decisions',
+    });
   }
 
-  const lines: string[] = [];
-  
-  // Header
-  lines.push(chalk.cyan('\n📜 Decision History\n'));
-  
-  // Format each history entry
-  history.forEach((entry, index) => {
-    const timestamp = chalk.gray(formatDateTime(entry.timestamp));
-    const provider = chalk.cyan(`[${entry.provider}]`);
-    
-    lines.push(`${timestamp} ${provider}`);
-    lines.push('');
-    
-    // Prompt
-    lines.push(chalk.bold('Prompt:'));
-    lines.push(chalk.white(`  ${entry.prompt}`));
-    lines.push('');
-    
-    // Response (truncated if too long)
-    lines.push(chalk.bold('Response:'));
-    const responseSummary = truncateText(entry.response, 200);
-    lines.push(chalk.gray(`  ${responseSummary}`));
-    
-    // Add separator between entries (except after last one)
-    if (index < history.length - 1) {
-      lines.push('');
-      lines.push(chalk.gray('─'.repeat(60)));
-      lines.push('');
-    }
+  const header = renderHeader({
+    text: 'Decision History',
+    icon: getIcon('history') as string,
+    level: 1,
   });
-  
-  return lines.join('\n');
+
+  const timelineEntries = history.map((entry) => ({
+    timestamp: formatDateTime(entry.timestamp),
+    title: `[${entry.provider}]`,
+    content: `Prompt: ${entry.prompt}\n\nResponse: ${truncateText(entry.response, 200)}`,
+    icon: getIcon('ai') as string,
+    color: getColor('primary'),
+  }));
+
+  const timeline = renderTimeline({
+    entries: timelineEntries,
+    showConnectors: true,
+  });
+
+  return `${header}\n\n${timeline}`;
 }
 
 /**
@@ -222,4 +202,155 @@ function truncateText(text: string, maxLength: number): string {
   }
   
   return text.substring(0, maxLength - 3) + '...';
+}
+
+/**
+ * Format status display with context information.
+ * Shows global identity, profile, project, and pins in organized boxes.
+ * 
+ * @param context - MergedContext to display
+ * @returns Formatted string with status display
+ */
+export function formatStatus(context: MergedContext): string {
+  const sections: string[] = [];
+
+  // Global Identity section
+  const identityLines: string[] = [];
+  identityLines.push(applyColor('Name: ', getColor('textBright')) + context.global.name);
+  identityLines.push(applyColor('Role: ', getColor('textBright')) + context.global.role);
+  identityLines.push(applyColor('Communication: ', getColor('textBright')) + context.global.communication);
+
+  const identityBox = renderBox(identityLines.join('\n'), {
+    title: `${getIcon('profile')} Global Identity`,
+    borderStyle: 'rounded',
+    padding: 1,
+    borderColor: getColor('info')
+  });
+  sections.push(identityBox);
+
+  // Active Profile section
+  const profileDetails: string[] = [];
+  profileDetails.push(renderBadge({
+    text: context.profile.name,
+    variant: 'success',
+    icon: getIcon('success') as string,
+  }));
+  profileDetails.push('');
+  profileDetails.push(applyColor('Focus: ', getColor('textBright')) + context.profile.focus);
+  profileDetails.push(applyColor('Priorities: ', getColor('textBright')) + context.profile.priorities.join(', '));
+
+  const profileBox = renderBox(profileDetails.join('\n'), {
+    title: `${getIcon('settings')} Active Profile`,
+    borderStyle: 'rounded',
+    padding: 1,
+    borderColor: getColor('success')
+  });
+  sections.push(profileBox);
+
+  // Project section
+  if (context.project) {
+    const projectLines: string[] = [];
+    projectLines.push(applyColor('Name: ', getColor('textBright')) + context.project.project);
+    if (context.project.stack && context.project.stack.length > 0) {
+      projectLines.push(applyColor('Stack: ', getColor('textBright')) + context.project.stack.join(', '));
+    }
+    if (context.project.context) {
+      projectLines.push(applyColor('Context: ', getColor('textBright')) + context.project.context);
+    }
+
+    const projectBox = renderBox(projectLines.join('\n'), {
+      title: `${getIcon('project')} Current Project`,
+      borderStyle: 'rounded',
+      padding: 1,
+      borderColor: getColor('primary')
+    });
+    sections.push(projectBox);
+  } else {
+    const noProjectBox = renderBox(
+      applyColor('No project detected in current directory', getColor('warning')) +
+        '\n\n' +
+        applyColor('Run "llmenv init" to initialize a project', getColor('info')),
+      {
+        title: `${getIcon('warning')} No Project`,
+        borderStyle: 'rounded',
+        padding: 1,
+        borderColor: getColor('warning')
+      }
+    );
+    sections.push(noProjectBox);
+  }
+
+  // Pins section
+  if (context.pins && context.pins.length > 0) {
+    const pinCount = renderBadge({
+      text: `${context.pins.length} ${context.pins.length === 1 ? 'pin' : 'pins'}`,
+      variant: 'info',
+      icon: getIcon('pin') as string,
+    });
+
+    const pinsBox = renderBox(pinCount, {
+      title: `${getIcon('pin')} Pinned Facts`,
+      borderStyle: 'rounded',
+      padding: 1,
+      borderColor: getColor('secondary')
+    });
+    sections.push(pinsBox);
+  }
+
+  return sections.join('\n\n');
+}
+
+/**
+ * Format error message with helpful context and suggestions.
+ * 
+ * @param error - Error object or message
+ * @param suggestion - Optional suggestion for fixing the error
+ * @returns Formatted error display
+ */
+export function formatError(error: Error | string, suggestion?: string): string {
+  const errorMessage = typeof error === 'string' ? error : error.message;
+  const errorStack = typeof error === 'string' ? undefined : error.stack;
+
+  const lines: string[] = [];
+  lines.push(applyColor(errorMessage, getColor('error')));
+
+  if (suggestion) {
+    lines.push('');
+    lines.push(applyColor('💡 Suggestion:', getColor('info')));
+    lines.push(applyColor(suggestion, getColor('text')));
+  }
+
+  if (errorStack) {
+    lines.push('');
+    lines.push(applyColor('Technical Details:', getColor('textMuted')));
+    lines.push(applyColor(errorStack, getColor('textMuted')));
+  }
+
+  return renderBox(lines.join('\n'), {
+    title: `${getIcon('error')} Error`,
+    borderStyle: 'bold',
+    borderColor: getColor('error'),
+    padding: 1,
+  });
+}
+
+/**
+ * Format success message with confirmation.
+ * 
+ * @param message - Success message
+ * @param details - Optional additional details
+ * @returns Formatted success display
+ */
+export function formatSuccess(message: string, details?: string): string {
+  const badge = renderBadge({
+    text: message,
+    variant: 'success',
+    icon: getIcon('success') as string,
+  });
+
+  if (details) {
+    return `${badge}\n${applyColor(details, getColor('textMuted'))}`;
+  }
+
+  return badge;
 }

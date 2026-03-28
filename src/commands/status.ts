@@ -1,6 +1,7 @@
-import chalk from 'chalk';
-import { buildContext, formatContext } from '../core/context.js';
+import { buildContext } from '../core/context.js';
 import type { ContextStack } from '../types/index.js';
+import { formatStatus } from '../utils/formatters.js';
+import { renderBanner } from '../ui/components/banner.js';
 
 /**
  * Display the current merged context including global identity, active profile,
@@ -37,29 +38,21 @@ export async function statusCommand(cwd: string = process.cwd()): Promise<void> 
   // Build the complete context stack
   const context: ContextStack = await buildContext(cwd);
   
-  // Format the context for display
-  const formattedContext = formatContext({
+  // Display banner
+  console.log(renderBanner());
+  
+  // Format the context for display using the rich UI components
+  // We map the ContextStack to MergedContext structure required by formatStatus
+  const mergedContext = {
     global: context.global,
     profile: context.profile,
     project: context.project,
     pins: context.pins.map(p => p.fact)
-  });
-  
-  // Display header
-  console.log(chalk.cyan('\n📋 Current Context\n'));
+  };
+
+  const formattedStatus = formatStatus(mergedContext);
   
   // Display formatted context
-  console.log(formattedContext);
-  
-  // Display project status
-  if (context.project) {
-    console.log(chalk.green(`\n✓ Project: ${context.project.project}`));
-  } else {
-    console.log(chalk.yellow('\n⚠ No project detected in current directory'));
-  }
-  
-  // Display active profile and pin count
-  console.log(chalk.gray(`\nActive profile: ${context.profile.name}`));
-  console.log(chalk.gray(`Pins: ${context.pins.length}`));
+  console.log(formattedStatus);
   console.log(); // Empty line for spacing
 }

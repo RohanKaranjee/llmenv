@@ -4,6 +4,9 @@ import { fileExists, writeJSON } from '../core/config.js';
 import { registerProject } from '../core/projects.js';
 import { ValidationError, ConfigError } from '../types/errors.js';
 import type { ProjectConfig } from '../types/index.js';
+import ora from 'ora';
+import { renderBox } from '../ui/components/box.js';
+import { getColor, applyColor } from '../ui/core/theme.js';
 
 /**
  * Initialize a new llmenv project in the current directory.
@@ -108,9 +111,31 @@ export async function initCommand(cwd: string = process.cwd()): Promise<void> {
     priorities: parseCommaSeparated(answers.priorities)
   };
 
-  // Write .llmenv file
-  await writeJSON(llmenvPath, config);
+  const spinner = ora('Initializing project...').start();
 
-  // Register project in global registry
-  await registerProject(cwd, config);
+  try {
+    // Write .llmenv file
+    await writeJSON(llmenvPath, config);
+
+    // Register project in global registry
+    await registerProject(cwd, config);
+    
+    spinner.succeed('Project initialized successfully');
+    
+    const details = [
+      applyColor('Project: ', getColor('textBright')) + config.project,
+      applyColor('Stack: ', getColor('textBright')) + (config.stack.length ? config.stack.join(', ') : 'None'),
+      applyColor('Context: ', getColor('textBright')) + (config.context || 'None')
+    ].join('\n');
+    
+    console.log('\n' + renderBox(details, {
+      title: 'Project Settings',
+      borderStyle: 'rounded',
+      borderColor: getColor('success'),
+      padding: 1
+    }) + '\n');
+  } catch (error) {
+    spinner.fail('Failed to initialize project');
+    throw error;
+  }
 }

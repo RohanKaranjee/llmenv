@@ -1,6 +1,6 @@
 {
   "name": "llmenv",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": ".env is for secrets. .llmenv is for you. A persistent identity layer for AI tools.",
   "keywords": [
     "ai",

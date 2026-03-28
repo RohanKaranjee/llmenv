@@ -23,7 +23,7 @@ const program = new Command();
 program
   .name('llmenv')
   .description('.env is for secrets. .llmenv is for you.')
-  .version('1.0.0');
+  .version('2.0.0');
 
 // Initialize config before running any command
 program.hook('preAction', async () => {
