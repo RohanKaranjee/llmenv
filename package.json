@@ -18,7 +18,7 @@
     "url": ""
   },
   "bin": {
-    "llmenv": "./dist/index.js"
+    "llmenv": "dist/index.js"
   },
   "files": [
     "dist",
