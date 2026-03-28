@@ -117,6 +117,8 @@ llmenv inject "How do I structure my database schema for this?"
 | `llmenv identity` | Configure who you are (`--github <username>`) |
 | `llmenv use <profile>`| Switch to: `build`, `review`, `debug`, `learn`, `refactor` |
 | `llmenv pin <fact>` | Save a rule (`--learn` / `--scope <pattern>`) |
+| `llmenv config` | Configure AI provider and API key |
+| `llmenv inject '<prompt>'` | Send prompt with context to AI natively |
 | `llmenv sync` | Manually sync to IDE files (normally happens automatically) |
 | `llmenv status` | View your current context configuration |
 
