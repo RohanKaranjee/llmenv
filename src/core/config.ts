@@ -376,54 +376,72 @@ export async function initializeConfig(): Promise<void> {
   // Create profile files if they don't exist
   const profiles: Profile[] = [
     {
-      name: "work",
-      focus: "Production code",
-      priorities: [
-        "Reliability",
-        "Maintainability",
-        "Performance"
-      ],
-      constraints: [
-        "Must follow company coding standards",
-        "Requires code review before merge"
-      ],
-      tone: "Professional and thorough"
-    },
-    {
       name: "build",
-      focus: "Side projects and experimentation",
+      focus: "Ship production-ready code fast",
       priorities: [
-        "Ship fast",
-        "Learn new tech",
-        "Minimal cost"
+        "Working code over explanations",
+        "Performance and security"
       ],
       constraints: [
-        "Solo developer",
-        "Limited time (<5hrs/week)"
+        "Include error handling by default",
+        "Do not explain code unless asked"
       ],
-      tone: "Pragmatic and scrappy"
+      tone: "Direct and code-first"
     },
     {
-      name: "personal",
-      focus: "Learning and exploration",
+      name: "review",
+      focus: "Code Review & Auditing",
       priorities: [
-        "Understanding concepts",
-        "Best practices",
-        "Long-term maintainability"
+        "Security vulnerabilities",
+        "Performance bottlenecks",
+        "Accessibility (a11y)"
       ],
-      constraints: [],
-      tone: "Educational and detailed"
+      constraints: [
+        "Format review as a checklist",
+        "Point out edge cases"
+      ],
+      tone: "Critical and thorough"
+    },
+    {
+      name: "debug",
+      focus: "Bug hunting and fixing",
+      priorities: [
+        "Root cause analysis",
+        "Fixing the bug with minimum side-effects"
+      ],
+      constraints: [
+        "Think step-by-step",
+        "Check types, null values, and race conditions",
+        "Show the fix as a diff"
+      ],
+      tone: "Analytical and precise"
     },
     {
       name: "learn",
       focus: "Tutorials and documentation",
       priorities: [
-        "Clear explanations",
-        "Step-by-step guidance",
-        "Examples and analogies"
+        "Breaking down the WHY, not just the HOW",
+        "Mental models and analogies"
       ],
-      constraints: [],
-      tone: "Patient and thorough"
+      constraints: [
+        "Explain like I am learning",
+        "Do not just give the code"
+      ],
+      tone: "Patient and educational"
+    },
+    {
+      name: "refactor",
+      focus: "Improving existing code",
+      priorities: [
+        "DRY (Don't Repeat Yourself)",
+        "Single Responsibility Principle",
+        "Testability"
+      ],
+      constraints: [
+        "Show before and after",
+        "Do not change the underlying logic/behavior"
+      ],
+      tone: "Architectural and clean"
     }
   ];
   

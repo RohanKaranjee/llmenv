@@ -1,12 +1,16 @@
-import chalk from 'chalk';
 import fs from 'fs/promises';
-import { getActiveProfilePath } from '../core/config.js';
+import { getActiveProfilePath, getProfilePath, readJSON } from '../core/config.js';
 import { ValidationError } from '../types/errors.js';
+import type { Profile } from '../types/index.js';
+import { renderBox, renderHeader, renderBadge } from '../ui/index.js';
+import { getColor, applyColor } from '../ui/core/theme.js';
+import { getIcon } from '../ui/icons.js';
+import { syncCommand } from './sync.js';
 
 /**
  * Valid profile names that can be used with the use command.
  */
-const VALID_PROFILES = ['work', 'build', 'personal', 'learn'] as const;
+const VALID_PROFILES = ['build', 'review', 'debug', 'learn', 'refactor'] as const;
 type ValidProfile = typeof VALID_PROFILES[number];
 
 /**
@@ -45,11 +49,34 @@ export async function useCommand(profileName?: string): Promise<void> {
       );
     }
     
-    // Display current profile
-    const currentProfile = await fs.readFile(activePath, 'utf-8');
-    console.log(chalk.cyan('\n📋 Current Profile\n'));
-    console.log(chalk.white(`Active profile: ${chalk.bold(currentProfile.trim())}`));
-    console.log();
+    const currentProfileName = await fs.readFile(activePath, 'utf-8');
+    const currentName = currentProfileName.trim();
+    
+    // Read profile configuration
+    const profilePath = getProfilePath(currentName);
+    const profile = await readJSON<Profile>(profilePath);
+    
+    console.log(renderHeader({ text: 'Current Profile', icon: getIcon('profile') as string, level: 1 }) + '\n');
+    
+    const profileDetails: string[] = [];
+    profileDetails.push(renderBadge({
+      text: profile.name,
+      variant: 'success',
+      icon: getIcon('success') as string,
+    }));
+    profileDetails.push('');
+    profileDetails.push(applyColor('Focus: ', getColor('textBright')) + profile.focus);
+    profileDetails.push(applyColor('Priorities: ', getColor('textBright')) + profile.priorities.join(', '));
+    profileDetails.push(applyColor('Constraints: ', getColor('textBright')) + (profile.constraints.length ? profile.constraints.join(', ') : 'None'));
+    profileDetails.push(applyColor('Tone: ', getColor('textBright')) + profile.tone);
+
+    console.log(renderBox(profileDetails.join('\n'), {
+      title: `${getIcon('settings')} Active Profile`,
+      borderStyle: 'rounded',
+      padding: 1,
+      borderColor: getColor('success')
+    }) + '\n');
+    
     return;
   }
   
@@ -65,8 +92,17 @@ export async function useCommand(profileName?: string): Promise<void> {
   await fs.writeFile(activePath, profileName, 'utf-8');
   
   // Display confirmation
-  console.log(chalk.green(`\n✓ Switched to profile: ${chalk.bold(profileName)}`));
-  console.log();
+  const successBadge = renderBadge({
+    text: `Switched to profile: ${profileName}`,
+    variant: 'success',
+    icon: getIcon('success') as string,
+  });
+  console.log('\n' + successBadge + '\n');
+
+  // Auto-sync silently
+  try {
+    await syncCommand({ verbose: false, silent: true });
+  } catch (err) {}
 }
 
 /**

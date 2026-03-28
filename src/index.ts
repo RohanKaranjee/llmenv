@@ -8,8 +8,15 @@ import { pinCommand, pinsCommand, unpinCommand } from './commands/pin.js';
 import { historyCommand } from './commands/history.js';
 import { injectCommand } from './commands/inject.js';
 import { configCommand } from './commands/config.js';
+import { identityCommand } from './commands/identity.js';
+import { syncCommand } from './commands/sync.js';
+import { scanCommand } from './commands/scan.js';
 import { handleError } from './utils/error-handler.js';
 import { initializeConfig } from './core/config.js';
+import { renderBanner } from './ui/components/banner.js';
+import { buildContext } from './core/context.js';
+import { getColor, applyColor } from './ui/core/theme.js';
+import { renderBox } from './ui/components/box.js';
 
 const program = new Command();
 
@@ -90,10 +97,12 @@ program
 // Register pin command
 program
   .command('pin <fact>')
-  .description('Add a new persistent fact')
-  .action(async (fact: string) => {
+  .description('Pin a global fact or rule for all your AI interactions')
+  .option('--learn', 'Mark this pin as an AI mistake to learn from')
+  .option('--scope <pattern>', 'Glob pattern to scope this rule (e.g., "*.test.ts")')
+  .action(async (fact: string, options) => {
     try {
-      await pinCommand(fact);
+      await pinCommand(fact, options);
     } catch (error) {
       handleError(error);
     }
@@ -160,4 +169,73 @@ program
     }
   });
 
-program.parse();
+// Register identity command
+program
+  .command('identity')
+  .description('Set up or update your global developer identity')
+  .option('--github <username>', 'Auto-fill your identity from GitHub profile')
+  .action(async (options) => {
+    try {
+      await identityCommand(options);
+    } catch (error) {
+      handleError(error);
+    }
+  });
+
+// Register sync command
+program
+  .command('sync')
+  .description('Sync your context to all AI IDE rules files (Cursor, Windsurf, Copilot, etc.)')
+  .option('--verbose', 'Use verbose context format (more tokens, more detail)')
+  .action(async (options: { verbose?: boolean }) => {
+    try {
+      await syncCommand(options);
+    } catch (error) {
+      handleError(error);
+    }
+  });
+
+// Register scan command
+program
+  .command('scan')
+  .description('Auto-scan your project files to generate accurate context (package.json, tsconfig, etc.)')
+  .action(async () => {
+    try {
+      await scanCommand();
+    } catch (error) {
+      handleError(error);
+    }
+  });
+
+if (!process.argv.slice(2).length) {
+  (async () => {
+    try {
+      await initializeConfig();
+      console.log(renderBanner());
+      
+      try {
+        const context = await buildContext(process.cwd());
+        const summary = [
+          applyColor(`Profile: ${context.profile.name}`, getColor('success')),
+          applyColor(`Project: ${context.project?.project || 'None'}`, getColor('primary')),
+          applyColor(`Pins: ${context.pins.length}`, getColor('info'))
+        ].join('  |  ');
+        
+        console.log(renderBox(summary, {
+          borderStyle: 'rounded',
+          borderColor: getColor('border'),
+          align: 'center',
+          padding: 0
+        }) + '\n');
+      } catch (e) {
+        // Ignore if context building fails (e.g. initial setup)
+      }
+      
+      console.log('  ' + applyColor('Run "llmenv --help" to see available commands.', getColor('textMuted')) + '\n');
+    } catch (error) {
+      handleError(error);
+    }
+  })();
+} else {
+  program.parse();
+}

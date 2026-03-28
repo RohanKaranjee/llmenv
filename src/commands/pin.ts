@@ -1,7 +1,10 @@
-import chalk from 'chalk';
 import { addPin, listPins, removePin } from '../core/pins.js';
 import { formatPinList } from '../utils/formatters.js';
 import { ValidationError } from '../types/errors.js';
+import { renderBox } from '../ui/index.js';
+import { getColor, applyColor } from '../ui/core/theme.js';
+import { getIcon } from '../ui/icons.js';
+import { syncCommand } from './sync.js';
 
 /**
  * Add a new pin with the provided fact text.
@@ -21,11 +24,18 @@ import { ValidationError } from '../types/errors.js';
  * //         Always use TypeScript strict mode
  * ```
  */
-export async function pinCommand(fact: string): Promise<void> {
+export async function pinCommand(fact: string, options: { learn?: boolean; scope?: string } = {}): Promise<void> {
   // Validate fact is not empty
-  const trimmedFact = fact.trim();
+  let trimmedFact = fact.trim();
   if (trimmedFact.length === 0) {
     throw new ValidationError('Pin fact cannot be empty', 'fact');
+  }
+
+  if (options.scope) {
+    trimmedFact = `[Scope: ${options.scope}] ${trimmedFact}`;
+  }
+  if (options.learn) {
+    trimmedFact = `[LEARN] ${trimmedFact}`;
   }
 
   // Add the pin
@@ -33,9 +43,18 @@ export async function pinCommand(fact: string): Promise<void> {
 
   // Display confirmation with pin ID (first 8 characters)
   const shortId = pin.id.substring(0, 8);
-  console.log(chalk.green(`\n✓ Pin added: ${shortId}`));
-  console.log(chalk.gray(`  ${pin.fact}`));
-  console.log(); // Empty line for spacing
+  const successBox = renderBox(applyColor(pin.fact, getColor('text')), {
+    title: `${getIcon('success')} Pin Added: ${shortId}`,
+    borderStyle: 'rounded',
+    borderColor: getColor('success'),
+    padding: 1
+  });
+  console.log('\n' + successBox + '\n');
+
+  // Auto-sync silently
+  try {
+    await syncCommand({ verbose: false, silent: true });
+  } catch (err) {}
 }
 
 /**
@@ -64,7 +83,6 @@ export async function pinsCommand(): Promise<void> {
   // Format and display the pin list
   const formatted = formatPinList(pins);
   console.log(formatted);
-  console.log(); // Empty line for spacing
 }
 
 /**
@@ -94,8 +112,13 @@ export async function unpinCommand(id: string): Promise<void> {
   );
 
   if (!matchingPin) {
-    console.log(chalk.red(`\n✗ Pin not found: ${id}`));
-    console.log(); // Empty line for spacing
+    const errorBox = renderBox(applyColor(`Pin not found: ${id}`, getColor('error')), {
+      title: `${getIcon('error')} Error`,
+      borderStyle: 'rounded',
+      borderColor: getColor('error'),
+      padding: 1
+    });
+    console.log('\n' + errorBox + '\n');
     return;
   }
 
@@ -104,10 +127,25 @@ export async function unpinCommand(id: string): Promise<void> {
 
   if (removed) {
     const shortId = matchingPin.id.substring(0, 8);
-    console.log(chalk.green(`\n✓ Pin removed: ${shortId}`));
-    console.log(chalk.gray(`  ${matchingPin.fact}`));
+    const successBox = renderBox(applyColor(matchingPin.fact, getColor('textMuted')), {
+      title: `${getIcon('success')} Pin Removed: ${shortId}`,
+      borderStyle: 'rounded',
+      borderColor: getColor('success'),
+      padding: 1
+    });
+    console.log('\n' + successBox + '\n');
+
+    // Auto-sync silently
+    try {
+      await syncCommand({ verbose: false, silent: true });
+    } catch (err) {}
   } else {
-    console.log(chalk.red(`\n✗ Pin not found: ${id}`));
+    const errorBox = renderBox(applyColor(`Pin not found: ${id}`, getColor('error')), {
+      title: `${getIcon('error')} Error`,
+      borderStyle: 'rounded',
+      borderColor: getColor('error'),
+      padding: 1
+    });
+    console.log('\n' + errorBox + '\n');
   }
-  console.log(); // Empty line for spacing
 }

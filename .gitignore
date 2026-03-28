@@ -42,3 +42,7 @@ verify-*.ts
 
 # Spec files (internal development)
 .kiro/
+
+# Test directories and local rules
+test_project/
+GEMINI.md
