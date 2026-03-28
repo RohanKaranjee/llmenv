@@ -94,6 +94,20 @@ Pins: [LEARN] Never use useEffect for data fetching | [Scope: *.css] Use CSS mod
 <!-- LLMENV:END -->
 ```
 
+## 🤖 Native AI Generation
+
+While `llmenv` is designed to automatically sync context into your favorite IDE (Cursor, Windsurf, Copilot), it also works as a standalone AI CLI!
+
+1. Set up your API key (OpenAI or Claude):
+```bash
+llmenv config
+```
+
+2. Ask a question! Your prompt will automatically be wrapped with your identity, profile, project tech stack, and smart pins:
+```bash
+llmenv inject "How do I structure my database schema for this?"
+```
+
 ## Available Commands
 
 | Command | Description |
