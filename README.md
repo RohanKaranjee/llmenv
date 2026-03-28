@@ -112,4 +112,4 @@ MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-Made with ❤️ for developers who are tired of repeating themselves to AI tools.
+Made with ❤️ by Rohan Karanje for developers who are tired of repeating themselves to AI tools.
