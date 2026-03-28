@@ -5,35 +5,31 @@ import * as contextModule from '../../src/core/context.js';
 import inquirer from 'inquirer';
 import type { ProjectEntry } from '../../src/types/index.js';
 
-// Mock modules
 vi.mock('../../src/core/projects.js');
 vi.mock('../../src/core/context.js');
 vi.mock('inquirer');
 
 describe('switch command', () => {
-  let consoleLogSpy: any;
-  let processChdirSpy: any;
-  
+  let consoleLogSpy: ReturnType<typeof vi.spyOn>;
+
   beforeEach(() => {
     consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    processChdirSpy = vi.spyOn(process, 'chdir').mockImplementation(() => {});
   });
-  
+
   afterEach(() => {
     vi.restoreAllMocks();
   });
-  
+
   it('should display "No projects registered yet" when no projects exist', async () => {
-    // Mock empty project list
     vi.mocked(projectsModule.listProjects).mockResolvedValue([]);
-    
+
     await switchCommand();
-    
+
     expect(consoleLogSpy).toHaveBeenCalledWith(
       expect.stringContaining('No projects registered yet')
     );
   });
-  
+
   it('should display interactive list of projects', async () => {
     const mockProjects: ProjectEntry[] = [
       {
@@ -61,14 +57,13 @@ describe('switch command', () => {
         }
       }
     ];
-    
+
     vi.mocked(projectsModule.listProjects).mockResolvedValue(mockProjects);
     vi.mocked(contextModule.findProjectRoot).mockResolvedValue(null);
     vi.mocked(inquirer.prompt).mockResolvedValue({ projectPath: '/path/to/project-1' });
-    
+
     await switchCommand();
-    
-    // Verify inquirer was called with correct choices
+
     expect(inquirer.prompt).toHaveBeenCalledWith([
       expect.objectContaining({
         type: 'list',
@@ -87,7 +82,7 @@ describe('switch command', () => {
       })
     ]);
   });
-  
+
   it('should highlight currently detected project', async () => {
     const mockProjects: ProjectEntry[] = [
       {
@@ -115,27 +110,24 @@ describe('switch command', () => {
         }
       }
     ];
-    
+
     vi.mocked(projectsModule.listProjects).mockResolvedValue(mockProjects);
     vi.mocked(contextModule.findProjectRoot).mockResolvedValue('/path/to/current');
     vi.mocked(inquirer.prompt).mockResolvedValue({ projectPath: '/path/to/other' });
-    
+
     await switchCommand();
-    
-    // Verify inquirer was called with choices that include current marker
+
     const promptCall = vi.mocked(inquirer.prompt).mock.calls[0][0] as any;
     const choices = promptCall[0].choices;
-    
-    // Current project should have "← current" marker
+
     const currentChoice = choices.find((c: any) => c.value === '/path/to/current');
-    expect(currentChoice.name).toContain('← current');
-    
-    // Other project should not have the marker
+    expect(currentChoice.name).toContain('current');
+
     const otherChoice = choices.find((c: any) => c.value === '/path/to/other');
-    expect(otherChoice.name).not.toContain('← current');
+    expect(otherChoice.name).not.toContain('current');
   });
-  
-  it('should change working directory to selected project', async () => {
+
+  it('should print the selected project path for manual switching', async () => {
     const mockProjects: ProjectEntry[] = [
       {
         name: 'selected-project',
@@ -150,26 +142,20 @@ describe('switch command', () => {
         }
       }
     ];
-    
+
     vi.mocked(projectsModule.listProjects).mockResolvedValue(mockProjects);
     vi.mocked(contextModule.findProjectRoot).mockResolvedValue(null);
     vi.mocked(inquirer.prompt).mockResolvedValue({ projectPath: '/path/to/selected' });
-    
+
     await switchCommand();
-    
-    // Verify process.chdir was called with selected path
-    expect(processChdirSpy).toHaveBeenCalledWith('/path/to/selected');
-    
-    // Verify confirmation message
+
+    expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('cd "/path/to/selected"'));
     expect(consoleLogSpy).toHaveBeenCalledWith(
-      expect.stringContaining('✓ Switched to project: selected-project')
-    );
-    expect(consoleLogSpy).toHaveBeenCalledWith(
-      expect.stringContaining('Path: /path/to/selected')
+      expect.stringContaining('Selected: selected-project')
     );
   });
-  
-  it('should handle directory change errors gracefully', async () => {
+
+  it('should show the selected project even if the path does not exist yet', async () => {
     const mockProjects: ProjectEntry[] = [
       {
         name: 'invalid-project',
@@ -184,19 +170,18 @@ describe('switch command', () => {
         }
       }
     ];
-    
+
     vi.mocked(projectsModule.listProjects).mockResolvedValue(mockProjects);
     vi.mocked(contextModule.findProjectRoot).mockResolvedValue(null);
     vi.mocked(inquirer.prompt).mockResolvedValue({ projectPath: '/invalid/path' });
-    processChdirSpy.mockImplementation(() => {
-      throw new Error('Directory does not exist');
-    });
-    
+
     await switchCommand();
-    
-    // Verify error message is displayed
+
     expect(consoleLogSpy).toHaveBeenCalledWith(
-      expect.stringContaining('❌ Error: Failed to change directory')
+      expect.stringContaining('Selected: invalid-project')
+    );
+    expect(consoleLogSpy).toHaveBeenCalledWith(
+      expect.stringContaining('cd "/invalid/path"')
     );
   });
 });

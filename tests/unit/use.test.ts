@@ -11,23 +11,18 @@ describe('use command', () => {
   let originalEnv: string | undefined;
 
   beforeEach(async () => {
-    // Create a temporary test directory
     testDir = path.join(os.tmpdir(), `llmenv-test-${Date.now()}`);
     await fs.mkdir(testDir, { recursive: true });
 
-    // Set LLMENV_HOME to test directory
     originalEnv = process.env.LLMENV_HOME;
     process.env.LLMENV_HOME = testDir;
 
-    // Initialize config to create active file
     await initializeConfig();
   });
 
   afterEach(async () => {
-    // Clean up test directory
     await fs.rm(testDir, { recursive: true, force: true });
 
-    // Restore environment
     if (originalEnv) {
       process.env.LLMENV_HOME = originalEnv;
     } else {
@@ -36,14 +31,6 @@ describe('use command', () => {
   });
 
   describe('switching profiles', () => {
-    it('should switch to work profile', async () => {
-      await useCommand('work');
-
-      const activePath = path.join(testDir, 'active');
-      const content = await fs.readFile(activePath, 'utf-8');
-      expect(content).toBe('work');
-    });
-
     it('should switch to build profile', async () => {
       await useCommand('build');
 
@@ -52,12 +39,20 @@ describe('use command', () => {
       expect(content).toBe('build');
     });
 
-    it('should switch to personal profile', async () => {
-      await useCommand('personal');
+    it('should switch to review profile', async () => {
+      await useCommand('review');
 
       const activePath = path.join(testDir, 'active');
       const content = await fs.readFile(activePath, 'utf-8');
-      expect(content).toBe('personal');
+      expect(content).toBe('review');
+    });
+
+    it('should switch to debug profile', async () => {
+      await useCommand('debug');
+
+      const activePath = path.join(testDir, 'active');
+      const content = await fs.readFile(activePath, 'utf-8');
+      expect(content).toBe('debug');
     });
 
     it('should switch to learn profile', async () => {
@@ -69,15 +64,12 @@ describe('use command', () => {
     });
 
     it('should overwrite existing profile', async () => {
-      // Set initial profile
-      await useCommand('work');
-      
-      // Switch to different profile
       await useCommand('build');
+      await useCommand('refactor');
 
       const activePath = path.join(testDir, 'active');
       const content = await fs.readFile(activePath, 'utf-8');
-      expect(content).toBe('build');
+      expect(content).toBe('refactor');
     });
   });
 
@@ -89,7 +81,7 @@ describe('use command', () => {
 
     it('should reject production profile', async () => {
       await expect(useCommand('production')).rejects.toThrow(ValidationError);
-      await expect(useCommand('production')).rejects.toThrow('Valid profiles: work, build, personal, learn');
+      await expect(useCommand('production')).rejects.toThrow('Valid profiles: build, review, debug, learn, refactor');
     });
 
     it('should reject empty string', async () => {
@@ -97,22 +89,20 @@ describe('use command', () => {
     });
 
     it('should reject profile with wrong case', async () => {
-      await expect(useCommand('Work')).rejects.toThrow(ValidationError);
-      await expect(useCommand('WORK')).rejects.toThrow(ValidationError);
+      await expect(useCommand('Build')).rejects.toThrow(ValidationError);
+      await expect(useCommand('BUILD')).rejects.toThrow(ValidationError);
     });
 
     it('should reject profile with whitespace', async () => {
-      await expect(useCommand('work ')).rejects.toThrow(ValidationError);
-      await expect(useCommand(' work')).rejects.toThrow(ValidationError);
+      await expect(useCommand('build ')).rejects.toThrow(ValidationError);
+      await expect(useCommand(' build')).rejects.toThrow(ValidationError);
     });
   });
 
   describe('displaying current profile', () => {
     it('should display current profile when no argument provided', async () => {
-      // Set a profile first
       await useCommand('build');
 
-      // Mock console.log to capture output
       const logs: string[] = [];
       const originalLog = console.log;
       console.log = (...args: any[]) => {
@@ -122,17 +112,15 @@ describe('use command', () => {
       try {
         await useCommand();
 
-        // Verify output contains the current profile
         const output = logs.join('\n');
         expect(output).toContain('build');
-        expect(output).toContain('Active profile');
+        expect(output).toContain('Active Profile');
       } finally {
         console.log = originalLog;
       }
     });
 
-    it('should display default profile (work) when no switch has occurred', async () => {
-      // Mock console.log to capture output
+    it('should display default profile (build) when no switch has occurred', async () => {
       const logs: string[] = [];
       const originalLog = console.log;
       console.log = (...args: any[]) => {
@@ -142,9 +130,8 @@ describe('use command', () => {
       try {
         await useCommand();
 
-        // Verify output contains the default profile
         const output = logs.join('\n');
-        expect(output).toContain('work');
+        expect(output).toContain('build');
       } finally {
         console.log = originalLog;
       }
@@ -153,12 +140,10 @@ describe('use command', () => {
 
   describe('file operations', () => {
     it('should create active file if it does not exist', async () => {
-      // Remove active file
       const activePath = path.join(testDir, 'active');
       await fs.rm(activePath, { force: true });
 
-      // Switch profile should create the file
-      await useCommand('personal');
+      await useCommand('review');
 
       const exists = await fs.access(activePath).then(() => true).catch(() => false);
       expect(exists).toBe(true);
@@ -169,8 +154,7 @@ describe('use command', () => {
 
       const activePath = path.join(testDir, 'active');
       const content = await fs.readFile(activePath, 'utf-8');
-      
-      // Should be exactly the profile name, no extra whitespace
+
       expect(content).toBe('learn');
       expect(content.trim()).toBe(content);
     });

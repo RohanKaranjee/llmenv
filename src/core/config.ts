@@ -51,7 +51,7 @@ export function getDefaultConfigPath(): string {
  * Get the path to the active profile file.
  * 
  * Returns the absolute path to the file containing the name of the
- * currently active profile (e.g., 'work', 'build', 'personal', 'learn').
+ * currently active profile (e.g., 'build', 'review', 'debug', 'learn', 'refactor').
  * 
  * @returns Absolute path to ~/.llmenv/active
  * 
@@ -70,15 +70,15 @@ export function getActiveProfilePath(): string {
  * Get the path to a specific profile configuration file.
  * 
  * Returns the absolute path to a profile configuration file by name.
- * Profiles define context modes like work, build, personal, or learn.
+ * Profiles define context modes like build, review, debug, learn, or refactor.
  * 
- * @param profileName - Name of the profile (e.g., 'work', 'build', 'personal', 'learn')
+ * @param profileName - Name of the profile (e.g., 'build', 'review', 'debug', 'learn', 'refactor')
  * @returns Absolute path to ~/.llmenv/profiles/{profileName}.json
  * 
  * @example
  * ```typescript
- * const workProfilePath = getProfilePath('work');
- * const profile = await readJSON<Profile>(workProfilePath);
+ * const buildProfilePath = getProfilePath('build');
+ * const profile = await readJSON<Profile>(buildProfilePath);
  * console.log(`Focus: ${profile.focus}`);
  * ```
  */
@@ -327,12 +327,12 @@ export async function writeJSON<T>(filePath: string, data: T): Promise<void> {
  * Creates the complete ~/.llmenv/ directory structure with all required
  * files and default configurations. This includes:
  * - Main config directory (~/.llmenv/)
- * - Profiles directory with default profiles (work, build, personal, learn)
+ * - Profiles directory with default profiles (build, review, debug, learn, refactor)
  * - History directory for decision logs
  * - Default global identity (default.json)
  * - Empty projects registry (projects.json)
  * - Empty pins list (pins.json)
- * - Active profile file (active) set to 'work'
+ * - Active profile file (active) set to 'build'
  * 
  * Only creates files that don't already exist, so it's safe to call multiple times.
  * 
@@ -469,6 +469,6 @@ export async function initializeConfig(): Promise<void> {
   // Create active file if it doesn't exist
   const activePath = getActiveProfilePath();
   if (!(await fileExists(activePath))) {
-    await fs.writeFile(activePath, 'work', 'utf-8');
+    await fs.writeFile(activePath, 'build', 'utf-8');
   }
 }

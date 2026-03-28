@@ -159,7 +159,7 @@ describe('config command', () => {
 
     // Verify console.log was called with success message
     expect(console.log).toHaveBeenCalledWith(
-      expect.stringContaining('✓ AI settings configured successfully')
+      expect.stringContaining('AI Configuration')
     );
   });
 });

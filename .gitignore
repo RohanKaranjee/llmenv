@@ -30,6 +30,7 @@ yarn-error.log*
 
 # Temporary files
 *.tmp
+*.txt
 .cache/
 
 # Documentation files (not for GitHub)

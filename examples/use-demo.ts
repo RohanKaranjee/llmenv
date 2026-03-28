@@ -24,17 +24,17 @@ async function demo() {
     console.log('\n3. Display current profile after switch:');
     await useCommand();
 
-    // Switch to personal profile
-    console.log('\n4. Switch to personal profile:');
-    await useCommand('personal');
+    // Switch to review profile
+    console.log('\n4. Switch to review profile:');
+    await useCommand('review');
 
     // Switch to learn profile
     console.log('\n5. Switch to learn profile:');
     await useCommand('learn');
 
-    // Switch back to work profile
-    console.log('\n6. Switch back to work profile:');
-    await useCommand('work');
+    // Switch to refactor profile
+    console.log('\n6. Switch to refactor profile:');
+    await useCommand('refactor');
 
     // Try invalid profile (will throw error)
     console.log('\n7. Try invalid profile (should fail):');

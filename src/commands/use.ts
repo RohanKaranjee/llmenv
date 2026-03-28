@@ -15,30 +15,30 @@ type ValidProfile = typeof VALID_PROFILES[number];
 
 /**
  * Switch to a different profile or display the current active profile.
- * 
+ *
  * If a profile name is provided, validates it against the list of valid profiles
- * (work, build, personal, learn) and writes it to ~/.llmenv/active. If no profile
- * name is provided (undefined), displays the current active profile.
- * 
+ * (build, review, debug, learn, refactor) and writes it to ~/.llmenv/active.
+ * If no profile name is provided (undefined), displays the current active profile.
+ *
  * @param profileName - Name of the profile to switch to (optional, undefined to display current)
  * @throws {ValidationError} If profile name is invalid or empty string
  * @throws {ConfigError} If file operations fail
- * 
+ *
  * @example
  * ```typescript
  * // Switch to a profile
- * await useCommand('work');
- * // Output: ✓ Switched to profile: work
- * 
+ * await useCommand('build');
+ * // Output: Switched to profile: build
+ *
  * // Display current profile
  * await useCommand();
- * // Output: 📋 Current Profile
- * //         Active profile: work
+ * // Output: Current Profile
+ * //         build
  * ```
  */
 export async function useCommand(profileName?: string): Promise<void> {
   const activePath = getActiveProfilePath();
-  
+
   // If no profile name provided or empty string, display current profile
   if (!profileName || profileName.trim().length === 0) {
     // If explicitly empty string (not undefined), treat as validation error
@@ -48,16 +48,16 @@ export async function useCommand(profileName?: string): Promise<void> {
         'profile'
       );
     }
-    
+
     const currentProfileName = await fs.readFile(activePath, 'utf-8');
     const currentName = currentProfileName.trim();
-    
+
     // Read profile configuration
     const profilePath = getProfilePath(currentName);
     const profile = await readJSON<Profile>(profilePath);
-    
+
     console.log(renderHeader({ text: 'Current Profile', icon: getIcon('profile') as string, level: 1 }) + '\n');
-    
+
     const profileDetails: string[] = [];
     profileDetails.push(renderBadge({
       text: profile.name,
@@ -76,10 +76,10 @@ export async function useCommand(profileName?: string): Promise<void> {
       padding: 1,
       borderColor: getColor('success')
     }) + '\n');
-    
+
     return;
   }
-  
+
   // Validate profile name
   if (!isValidProfile(profileName)) {
     throw new ValidationError(
@@ -87,10 +87,10 @@ export async function useCommand(profileName?: string): Promise<void> {
       'profile'
     );
   }
-  
+
   // Write profile name to active file
   await fs.writeFile(activePath, profileName, 'utf-8');
-  
+
   // Display confirmation
   const successBadge = renderBadge({
     text: `Switched to profile: ${profileName}`,
@@ -107,16 +107,16 @@ export async function useCommand(profileName?: string): Promise<void> {
 
 /**
  * Type guard to check if a string is a valid profile name.
- * 
+ *
  * Validates that the provided string is one of the valid profile names:
- * 'work', 'build', 'personal', or 'learn'.
- * 
+ * 'build', 'review', 'debug', 'learn', or 'refactor'.
+ *
  * @param profile - Profile name to validate
  * @returns True if profile is valid, false otherwise
- * 
+ *
  * @example
  * ```typescript
- * if (isValidProfile('work')) {
+ * if (isValidProfile('build')) {
  *   console.log('Valid profile');
  * }
  * ```

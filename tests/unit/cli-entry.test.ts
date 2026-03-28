@@ -16,8 +16,7 @@ describe('CLI Entry Point', () => {
 
   it('should display version when --version flag is used', () => {
     const output = execSync(`node ${cliPath} --version`, { encoding: 'utf-8' })
-    
-    expect(output.trim()).toBe('1.0.0')
+    expect(output.trim()).toBe('2.0.0')
   })
 
   it('should have correct program name', () => {

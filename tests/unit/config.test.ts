@@ -69,15 +69,17 @@ describe('Config Path Resolution', () => {
   describe('getProfilePath', () => {
     it('should return path to profile JSON file', () => {
       delete process.env.LLMENV_HOME;
-      const profilePath = getProfilePath('work');
-      expect(profilePath).toBe(path.join(os.homedir(), '.llmenv', 'profiles', 'work.json'));
+      const profilePath = getProfilePath('build');
+      expect(profilePath).toBe(path.join(os.homedir(), '.llmenv', 'profiles', 'build.json'));
     });
 
     it('should work with different profile names', () => {
       delete process.env.LLMENV_HOME;
       expect(getProfilePath('build')).toContain('build.json');
-      expect(getProfilePath('personal')).toContain('personal.json');
+      expect(getProfilePath('review')).toContain('review.json');
+      expect(getProfilePath('debug')).toContain('debug.json');
       expect(getProfilePath('learn')).toContain('learn.json');
+      expect(getProfilePath('refactor')).toContain('refactor.json');
     });
   });
 
@@ -437,12 +439,12 @@ describe('Configuration Initialization', () => {
       expect(Array.isArray(defaultConfig.preferences)).toBe(true);
     });
 
-    it('should create all four profile files', async () => {
+    it('should create all default profile files', async () => {
       const { initializeConfig, getProfilePath, fileExists } = await import('../../src/core/config.js');
       
       await initializeConfig();
       
-      const profiles = ['work', 'build', 'personal', 'learn'];
+      const profiles = ['build', 'review', 'debug', 'learn', 'refactor'];
       for (const profile of profiles) {
         const exists = await fileExists(getProfilePath(profile));
         expect(exists).toBe(true);
@@ -454,8 +456,8 @@ describe('Configuration Initialization', () => {
       
       await initializeConfig();
       
-      const workProfile = await readJSON<Profile>(getProfilePath('work'));
-      expect(workProfile).toHaveProperty('name', 'work');
+      const workProfile = await readJSON<Profile>(getProfilePath('build'));
+      expect(workProfile).toHaveProperty('name', 'build');
       expect(workProfile).toHaveProperty('focus');
       expect(workProfile).toHaveProperty('priorities');
       expect(workProfile).toHaveProperty('constraints');
@@ -484,13 +486,13 @@ describe('Configuration Initialization', () => {
       expect(pins).toHaveLength(0);
     });
 
-    it('should create active file with "work" as default', async () => {
+    it('should create active file with \\\'build\\\' as default', async () => {
       const { initializeConfig, getActiveProfilePath } = await import('../../src/core/config.js');
       
       await initializeConfig();
       
       const activeContent = await fs.readFile(getActiveProfilePath(), 'utf-8');
-      expect(activeContent).toBe('work');
+      expect(activeContent).toBe('build');
     });
 
     it('should not overwrite existing files', async () => {
@@ -537,10 +539,11 @@ describe('Configuration Initialization', () => {
       const configDir = getConfigDir();
       const jsonFiles = [
         path.join(configDir, 'default.json'),
-        path.join(configDir, 'profiles', 'work.json'),
         path.join(configDir, 'profiles', 'build.json'),
-        path.join(configDir, 'profiles', 'personal.json'),
+        path.join(configDir, 'profiles', 'review.json'),
+        path.join(configDir, 'profiles', 'debug.json'),
         path.join(configDir, 'profiles', 'learn.json'),
+        path.join(configDir, 'profiles', 'refactor.json'),
         path.join(configDir, 'projects.json'),
         path.join(configDir, 'pins.json'),
       ];

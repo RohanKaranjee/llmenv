@@ -131,7 +131,7 @@ describe('Pin Commands', () => {
         'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
       );
       expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Pin removed')
+        expect.stringContaining('Pin Removed')
       );
     });
 
@@ -153,7 +153,7 @@ describe('Pin Commands', () => {
         'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
       );
       expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Pin removed')
+        expect.stringContaining('Pin Removed')
       );
     });
 
