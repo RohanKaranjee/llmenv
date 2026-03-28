@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/banner.png" alt="llmenv banner" />
+</p>
+
 # llmenv v2 🚀
 
 > .env is for secrets. .llmenv is for you.
